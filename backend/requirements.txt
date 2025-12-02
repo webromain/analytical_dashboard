@@ -1,0 +1,6 @@
+FastAPI
+Uvicorn
+Pandas
+Matplotlib
+pytest
+httpx
