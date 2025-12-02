@@ -10,11 +10,13 @@ push-location backend
 Start-Process powershell -ArgumentList "-NoExit","-Command","uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload" | Out-Null
 pop-location
 
-# Open frontend
-$index = Join-Path (Get-Location) "frontend\\index.html"
-if (Test-Path $index) {
-  Write-Host "Opening frontend index.html in default browser..."
-  Start-Process $index
-} else {
-  Write-Warning "frontend/index.html not found"
-}
+# Serve frontend over HTTP to avoid file:// module restrictions
+push-location frontend
+Write-Host "Starting static server for frontend on http://127.0.0.1:5500 ..."
+Start-Process powershell -ArgumentList "-NoExit","-Command","python -m http.server 5500 --bind 127.0.0.1" | Out-Null
+pop-location
+
+# Open frontend URL
+$frontendUrl = "http://127.0.0.1:5500/index.html"
+Write-Host "Opening frontend at $frontendUrl ..."
+Start-Process $frontendUrl
