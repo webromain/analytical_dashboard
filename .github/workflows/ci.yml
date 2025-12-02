@@ -42,5 +42,5 @@ jobs:
         if: ${{ hashFiles('frontend/package.json') != '' }}
         run: |
           cd frontend
-          npm ci || npm install
+          npm install
           npm test || node tests/test_ui.js
