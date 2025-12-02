@@ -1,6 +1,21 @@
+# Python
 __pycache__/
-.ipynb_checkpoints/
 *.pyc
+.venv/
 .env
-*.csv
+
+# Node
+node_modules/
+
+# VSCode/IDE
+.vscode/
+.idea/
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Reports/coverage
+htmlcov/
+.coverage
+coverage.xml
