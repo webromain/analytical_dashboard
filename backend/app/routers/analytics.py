@@ -106,5 +106,11 @@ async def post_timeseries_upload(
         df = pd.read_csv(BytesIO(content))
     except Exception:
         return {"data": []}
-    ts = generate_timeseries(df, date_column=date_column, value_column=value_column, freq=freq, agg=agg)
+    ts = generate_timeseries(
+        df,
+        date_column=date_column,
+        value_column=value_column,
+        freq=freq,
+        agg=agg,
+    )
     return ts
