@@ -14,6 +14,7 @@ app.add_middleware(
 
 app.include_router(analytics.router)
 
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the Analytical Dashboard API!"}
