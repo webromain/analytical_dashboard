@@ -1,184 +1,412 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard Analytics</title>
-  <style>
-    :root {
-      --bg: #0b1120; --panel: #111827; --border: #1f2937; --text: #e5e7eb; --muted: #9ca3af; --primary: #2563eb; --primary-2: #1d4ed8; --success: #22c55e; --danger: #ef4444;
-      --sidebar-width: 260px;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
-    header { padding: 16px 24px; background: var(--panel); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-    header h1 { margin: 0; font-size: 18px; }
-    .header-actions { display:flex; gap:8px; align-items:center; }
-    main { padding: 16px; display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
-    .card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.03); border-radius: 10px; padding: 16px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    .card h2 { margin-top:0; font-size: 16px; }
-    label { font-size: 12px; color: var(--muted); display:block; margin-bottom:6px; }
-    select, input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: #0b1220; color: var(--text); }
-    .row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
-    .row.cols-2 { grid-template-columns: 1fr 1fr; }
-    .row.cols-3 { grid-template-columns: 1fr 1fr 120px; }
-    button { padding: 10px 12px; border-radius: 8px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: 600; }
-    button:hover { background: var(--primary-2); }
-    .btn-secondary { background: #374151; }
-    .section-footer { display:flex; gap:8px; align-items:center; }
-    .chart-wrap { background:#0b1220; border:1px solid var(--border); border-radius:8px; padding:8px; }
-    pre { background:#0b1220; border:1px solid var(--border); padding:8px; border-radius:8px; max-height:220px; overflow:auto; }
-    .toast { position: fixed; bottom: 16px; right: 16px; padding: 10px 12px; border-radius: 8px; background: #1f2937; color: var(--text); border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.35); min-width: 240px; display:none; }
-    .toast.success { border-color: var(--success); }
-    .toast.error { border-color: var(--danger); }
-    /* Glassmorphism for panels and sidebar */
-    .glass {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      backdrop-filter: blur(10px) saturate(120%);
-      -webkit-backdrop-filter: blur(10px) saturate(120%);
-      box-shadow: 0 6px 30px rgba(2,6,23,0.6);
-      color: var(--text);
-    }
-    /* Sidebar */
-    #sidebar {
-      position: fixed; left: 16px; top: 16px; bottom: 16px; width: var(--sidebar-width); padding: 18px; border-radius: 14px; z-index: 1300;
-    }
-    #sidebar h2 { margin: 0 0 8px 0; font-size: 14px; }
-    #sidebar nav ul { list-style: none; padding: 0; margin: 8px 0 0 0; display:flex; flex-direction:column; gap:8px; }
-    #sidebar nav a { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; color:var(--text); text-decoration:none; font-weight:600; }
-    #sidebar nav a:hover, #sidebar nav a:focus { background: rgba(255,255,255,0.03); outline: none; }
-    #sidebar nav a:focus-visible { box-shadow: 0 0 0 3px rgba(37,99,235,0.18); }
-    /* Main/content offset to make room for sidebar on wide screens */
-    @media (min-width: 900px) {
-      header { margin-left: calc(var(--sidebar-width) + 32px); }
-      main { margin-left: calc(var(--sidebar-width) + 32px); }
-    }
-    /* Responsive */
-    @media (max-width: 900px) {
-      main { grid-template-columns: 1fr; margin-left: 0; }
-      /* Sidebar hidden off-canvas on small screens */
-      #sidebar { transform: translateX(-120%); transition: transform 260ms ease-in-out; }
-      #sidebar.open { transform: translateX(0); }
-      .chart-wrap canvas { width: 100% !important; height: auto !important; }
-      header { padding: 12px; }
-      .header-actions { gap:6px; }
-    }
-    @media (max-width: 480px) {
-      .row.cols-3 { grid-template-columns: 1fr; }
-      .row.cols-2 { grid-template-columns: 1fr; }
-      button { width: 100%; }
-    }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-</head>
-<body>
-  <aside id="sidebar" class="glass" aria-label="Navigation principale">
-    <h2>Navigation</h2>
-    <nav aria-label="Menu principal">
-      <ul>
-        <li><a href="#data-section" id="nav-data">📁 Données</a></li>
-        <li><a href="#hist-section" id="nav-hist">📊 Histogramme</a></li>
-        <li><a href="#ts-section" id="nav-ts">📈 Série temporelle</a></li>
-        <li><a href="#" id="nav-docs" role="button">📚 Docs</a></li>
-        <li><button id="nav-open-sample" style="width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:none;background:transparent;color:var(--text);font-weight:600;">🔗 Ouvrir sample.csv</button></li>
-      </ul>
-    </nav>
-  </aside>
-  <header>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button id="hamburger" aria-label="menu" aria-controls="sidebar" aria-expanded="false" style="background:transparent;border:none;color:var(--text);font-size:20px;">☰</button>
-      <h1>Tableau de Bord Analytique</h1>
-    </div>
-    <div class="header-actions">
-      <span id="status" style="font-size:12px;color:var(--muted)">Prêt</span>
-      <button class="btn-secondary" id="open-sample">Ouvrir sample.csv</button>
-      <div style="position:relative">
-        <button id="docs-btn" class="btn-secondary">Docs ▾</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard Analytics</title>
+    <style>
+      :root {
+        --bg: #0b1120;
+        --panel: #111827;
+        --border: #1f2937;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --primary: #2563eb;
+        --primary-2: #1d4ed8;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --sidebar-width: 260px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial,
+          sans-serif;
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+      header {
+        padding: 16px 24px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .header-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      main {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        gap: 16px;
+      }
+      .card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
+        padding: 16px;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+      }
+      .card h2 {
+        margin-top: 0;
+        font-size: 16px;
+      }
+      label {
+        font-size: 12px;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 6px;
+      }
+      select,
+      input[type="text"],
+      input[type="number"],
+      input[type="file"] {
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #0b1220;
+        color: var(--text);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .row.cols-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+      .row.cols-3 {
+        grid-template-columns: 1fr 1fr 120px;
+      }
+      button {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: none;
+        background: var(--primary);
+        color: white;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:hover {
+        background: var(--primary-2);
+      }
+      .btn-secondary {
+        background: #374151;
+      }
+      .section-footer {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .chart-wrap {
+        background: #0b1220;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px;
+      }
+      pre {
+        background: #0b1220;
+        border: 1px solid var(--border);
+        padding: 8px;
+        border-radius: 8px;
+        max-height: 220px;
+        overflow: auto;
+      }
+      .toast {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #1f2937;
+        color: var(--text);
+        border: 1px solid var(--border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        min-width: 240px;
+        display: none;
+      }
+      .toast.success {
+        border-color: var(--success);
+      }
+      .toast.error {
+        border-color: var(--danger);
+      }
+      /* Glassmorphism for panels and sidebar */
+      .glass {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(10px) saturate(120%);
+        -webkit-backdrop-filter: blur(10px) saturate(120%);
+        box-shadow: 0 6px 30px rgba(2, 6, 23, 0.6);
+        color: var(--text);
+      }
+      /* Sidebar */
+      #sidebar {
+        position: fixed;
+        left: 16px;
+        top: 16px;
+        bottom: 16px;
+        width: var(--sidebar-width);
+        padding: 18px;
+        border-radius: 14px;
+        z-index: 1300;
+      }
+      #sidebar h2 {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+      }
+      #sidebar nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 8px 0 0 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #sidebar nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      #sidebar nav a:hover,
+      #sidebar nav a:focus {
+        background: rgba(255, 255, 255, 0.03);
+        outline: none;
+      }
+      #sidebar nav a:focus-visible {
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      }
+      /* Main/content offset to make room for sidebar on wide screens */
+      @media (min-width: 900px) {
+        header {
+          margin-left: calc(var(--sidebar-width) + 32px);
+        }
+        main {
+          margin-left: calc(var(--sidebar-width) + 32px);
+        }
+      }
+      /* Responsive */
+      @media (max-width: 900px) {
+        main {
+          grid-template-columns: 1fr;
+          margin-left: 0;
+        }
+        /* Sidebar hidden off-canvas on small screens */
+        #sidebar {
+          transform: translateX(-120%);
+          transition: transform 260ms ease-in-out;
+        }
+        #sidebar.open {
+          transform: translateX(0);
+        }
+        .chart-wrap canvas {
+          width: 100% !important;
+          height: auto !important;
+        }
+        header {
+          padding: 12px;
+        }
+        .header-actions {
+          gap: 6px;
+        }
+      }
+      @media (max-width: 480px) {
+        .row.cols-3 {
+          grid-template-columns: 1fr;
+        }
+        .row.cols-2 {
+          grid-template-columns: 1fr;
+        }
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <aside id="sidebar" class="glass" aria-label="Navigation principale">
+      <h2>Navigation</h2>
+      <nav aria-label="Menu principal">
+        <ul>
+          <li><a href="#data-section" id="nav-data">📁 Données</a></li>
+          <li><a href="#hist-section" id="nav-hist">📊 Histogramme</a></li>
+          <li><a href="#ts-section" id="nav-ts">📈 Série temporelle</a></li>
+          <li><a href="#" id="nav-docs" role="button">📚 Docs</a></li>
+          <li>
+            <button
+              id="nav-open-sample"
+              style="
+                width: 100%;
+                text-align: left;
+                padding: 10px 12px;
+                border-radius: 10px;
+                border: none;
+                background: transparent;
+                color: var(--text);
+                font-weight: 600;
+              "
+            >
+              🔗 Ouvrir sample.csv
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+    <header>
+      <div style="display: flex; align-items: center; gap: 12px">
+        <button
+          id="hamburger"
+          aria-label="menu"
+          aria-controls="sidebar"
+          aria-expanded="false"
+          style="
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 20px;
+          "
+        >
+          ☰
+        </button>
+        <h1>Tableau de Bord Analytique</h1>
       </div>
-    </div>
-  </header>
+      <div class="header-actions">
+        <span id="status" style="font-size: 12px; color: var(--muted)"
+          >Prêt</span
+        >
+        <button class="btn-secondary" id="open-sample">
+          Ouvrir sample.csv
+        </button>
+        <div style="position: relative">
+          <button id="docs-btn" class="btn-secondary">Docs ▾</button>
+        </div>
+      </div>
+    </header>
 
-  <!-- Docs panel (hidden by default) -->
-  <aside id="docs-panel" class="card" style="position:fixed;right:16px;top:72px;max-width:360px;display:none;z-index:1200;"> 
-    <h3>Documentation rapide</h3>
-    <div style="font-size:13px;color:var(--muted);line-height:1.4">
-      <strong>Upload</strong>: Choisir un fichier CSV, cliquer <em>Résumé (fichier)</em> pour analyser et remplir les sélecteurs.
-      <br/><br/>
-      <strong>Histogramme</strong>: sélectionner une colonne numérique et définir le nombre de bins, puis <em>Tracer histogramme</em>.
-      <br/><br/>
-      <strong>Série temporelle</strong>: sélectionner la colonne date (format reconnaissable) et la colonne valeur (numérique), choisir la fréquence (Jour/Semaine/Mois) puis <em>Tracer série</em>.
-      <br/><br/>
-      <strong>Mode chemin</strong>: entrer un chemin CSV sur le serveur et utiliser les boutons "chemin".
-      <br/><br/>
-      <strong>Astuce</strong>: si aucune colonne date/number n'est détectée, vérifiez le format CSV ou convertissez les colonnes localement.
-    </div>
-    <div style="margin-top:10px;text-align:right;"><button id="docs-close" class="btn-secondary">Fermer</button></div>
-  </aside>
-  <main>
-    <section id="data-section" class="card">
-      <h2>Données</h2>
-      <div class="row">
-        <label>CSV (fichier)</label>
-        <input id="csv-file" type="file" accept=".csv" />
+    <!-- Docs panel (hidden by default) -->
+    <aside
+      id="docs-panel"
+      class="card"
+      style="
+        position: fixed;
+        right: 16px;
+        top: 72px;
+        max-width: 360px;
+        display: none;
+        z-index: 1200;
+      "
+    >
+      <h3>Documentation rapide</h3>
+      <div style="font-size: 13px; color: var(--muted); line-height: 1.4">
+        <strong>Upload</strong>: Choisir un fichier CSV, cliquer
+        <em>Résumé (fichier)</em> pour analyser et remplir les sélecteurs.
+        <br /><br />
+        <strong>Histogramme</strong>: sélectionner une colonne numérique et
+        définir le nombre de bins, puis <em>Tracer histogramme</em>.
+        <br /><br />
+        <strong>Série temporelle</strong>: sélectionner la colonne date (format
+        reconnaissable) et la colonne valeur (numérique), choisir la fréquence
+        (Jour/Semaine/Mois) puis <em>Tracer série</em>. <br /><br />
+        <strong>Mode chemin</strong>: entrer un chemin CSV sur le serveur et
+        utiliser les boutons "chemin". <br /><br />
+        <strong>Astuce</strong>: si aucune colonne date/number n'est détectée,
+        vérifiez le format CSV ou convertissez les colonnes localement.
       </div>
-      <div class="row cols-3">
-        <div>
-          <label>Colonne histogramme</label>
-          <select id="hist-column-select"></select>
-        </div>
-        <div>
-          <label>Bins</label>
-          <input id="hist-bins" type="number" value="10" />
-        </div>
-        
+      <div style="margin-top: 10px; text-align: right">
+        <button id="docs-close" class="btn-secondary">Fermer</button>
       </div>
-      <div class="row cols-2">
-        <div>
-          <label>Colonne date</label>
-          <select id="ts-date-select"></select>
+    </aside>
+    <main>
+      <section id="data-section" class="card">
+        <h2>Données</h2>
+        <div class="row">
+          <label>CSV (fichier)</label>
+          <input id="csv-file" type="file" accept=".csv" />
         </div>
-        <div>
-          <label>Colonne valeur</label>
-          <select id="ts-value-select"></select>
+        <div class="row cols-3">
+          <div>
+            <label>Colonne histogramme</label>
+            <select id="hist-column-select"></select>
+          </div>
+          <div>
+            <label>Bins</label>
+            <input id="hist-bins" type="number" value="10" />
+          </div>
         </div>
-      </div>
-      <div class="row cols-2">
-        <div>
-          <label>Fréquence</label>
-          <select id="ts-freq">
-            <option value="D">Jour</option>
-            <option value="W">Semaine</option>
-            <option value="M">Mois</option>
-          </select>
+        <div class="row cols-2">
+          <div>
+            <label>Colonne date</label>
+            <select id="ts-date-select"></select>
+          </div>
+          <div>
+            <label>Colonne valeur</label>
+            <select id="ts-value-select"></select>
+          </div>
         </div>
-        <div class="section-footer">
-          <button id="run-all">Exécuter tout</button>
+        <div class="row cols-2">
+          <div>
+            <label>Fréquence</label>
+            <select id="ts-freq">
+              <option value="D">Jour</option>
+              <option value="W">Semaine</option>
+              <option value="M">Mois</option>
+            </select>
+          </div>
+          <div class="section-footer">
+            <button id="run-all">Exécuter tout</button>
+          </div>
         </div>
-      </div>
-      <hr style="border-color:var(--border)" />
-      <div class="row">
-        <label>Résumé</label>
-        <pre id="summary-out" style="white-space:pre-wrap"></pre>
-      </div>
-    </section>
+        <hr style="border-color: var(--border)" />
+        <div class="row">
+          <label>Résumé</label>
+          <pre id="summary-out" style="white-space: pre-wrap"></pre>
+        </div>
+      </section>
 
-    <section id="hist-section" class="card">
-      <h2>Histogramme</h2>
-      <div class="chart-wrap"><canvas id="histCanvas" height="220"></canvas></div>
-    </section>
+      <section id="hist-section" class="card">
+        <h2>Histogramme</h2>
+        <div class="chart-wrap">
+          <canvas id="histCanvas" height="220"></canvas>
+        </div>
+      </section>
 
-    <section id="ts-section" class="card" style="grid-column: 1 / span 2;">
-      <h2>Série temporelle</h2>
-      <div class="chart-wrap"><canvas id="tsCanvas" height="180"></canvas></div>
-    </section>
-  </main>
+      <section id="ts-section" class="card" style="grid-column: 1 / span 2">
+        <h2>Série temporelle</h2>
+        <div class="chart-wrap">
+          <canvas id="tsCanvas" height="180"></canvas>
+        </div>
+      </section>
+    </main>
 
-  <div id="toast" class="toast">Message</div>
-  <script type="module" src="./src/app.js"></script>
-</body>
+    <div id="toast" class="toast">Message</div>
+    <script type="module" src="./src/app.js"></script>
+  </body>
 </html>
