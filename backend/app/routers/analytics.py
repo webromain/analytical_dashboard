@@ -32,7 +32,7 @@ async def post_summary_upload(file: UploadFile = File(...)) -> Dict[str, Any]:
     try:
         from io import BytesIO
         df = pd.read_csv(BytesIO(content))
-    except Exception as e:
+    except Exception:
         return {"mean": {}, "median": {}, "variance": {"error": float("nan")}}
     stats = calculate_summary_statistics(df)
     return stats
