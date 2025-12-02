@@ -114,14 +114,47 @@ async function loadTimeseriesFile() {
 
 function populateSelectors(columns) {
   if (!histColumnSelect || !tsDateSelect || !tsValueSelect) return;
+  // preserve previous selections to avoid resetting user's choice
+  const prevHist = histColumnSelect.value;
+  const prevDate = tsDateSelect.value;
+  const prevValue = tsValueSelect.value;
+
   const numCols = columns.filter(c => c.type === 'number').map(c => c.name);
   histColumnSelect.innerHTML = '';
-  numCols.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; histColumnSelect.appendChild(opt); });
+  numCols.forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    histColumnSelect.appendChild(opt);
+  });
+  // if previous selection still exists, restore it
+  if (prevHist && Array.from(histColumnSelect.options).some(o => o.value === prevHist)) {
+    histColumnSelect.value = prevHist;
+  }
+
   const dateCols = columns.filter(c => c.type === 'datetime').map(c => c.name);
   tsDateSelect.innerHTML = '';
   tsValueSelect.innerHTML = '';
-  dateCols.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; tsDateSelect.appendChild(opt); });
-  numCols.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; tsValueSelect.appendChild(opt); });
+  dateCols.forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    tsDateSelect.appendChild(opt);
+  });
+  // try to restore previous date selection
+  if (prevDate && Array.from(tsDateSelect.options).some(o => o.value === prevDate)) {
+    tsDateSelect.value = prevDate;
+  }
+  // populate value (numeric) columns and try to restore
+  numCols.forEach((name) => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    tsValueSelect.appendChild(opt);
+  });
+  if (prevValue && Array.from(tsValueSelect.options).some(o => o.value === prevValue)) {
+    tsValueSelect.value = prevValue;
+  }
 }
 
 function buildExampleTimeSeries() {
@@ -194,6 +227,49 @@ if (runAllBtn) runAllBtn.addEventListener('click', runAll);
 
 const openSampleBtn = document.getElementById('open-sample');
 if (openSampleBtn) openSampleBtn.addEventListener('click', () => { selectedPath = '../data/sample.csv'; showToast('Sample sélectionné (serveur) — cliquez Exécuter tout'); });
+
+// Helper: load histogram for a server-side path (used when user changes select while using sample)
+async function loadHistogramFromPath(path) {
+  if (!path) return;
+  if (!histColumnSelect || !histCanvas) return;
+  const column = histColumnSelect.value || 'value';
+  const bins = Number(histBinsInput ? histBinsInput.value || 10 : 10);
+  try {
+    setStatus("Calcul de l'histogramme (serveur)…");
+    const hUrl = `${API}/histogram?file_path=${encodeURIComponent(path)}&column=${encodeURIComponent(column)}&bins=${bins}`;
+    const hData = await fetchJSON(hUrl);
+    const labels = hData.data.map(d => d.value);
+    const counts = hData.data.map(d => d.count);
+    const cfg = buildBarChartConfig(labels, counts, 'Histogramme');
+    if (histChart) histChart.destroy();
+    histChart = new Chart(histCanvas.getContext('2d'), cfg);
+    showToast('Histogramme mis à jour (serveur)');
+    setStatus('Prêt');
+  } catch (e) {
+    showToast(`Histogramme serveur erreur: ${e.message}`, 'error');
+    setStatus('Erreur');
+  }
+}
+
+// Recompute histogram when user changes column or bins
+if (histColumnSelect) {
+  histColumnSelect.addEventListener('change', () => {
+    if (csvFileInput && csvFileInput.files && csvFileInput.files.length > 0) {
+      loadHistogramFile();
+    } else if (selectedPath) {
+      loadHistogramFromPath(selectedPath);
+    }
+  });
+}
+if (histBinsInput) {
+  histBinsInput.addEventListener('change', () => {
+    if (csvFileInput && csvFileInput.files && csvFileInput.files.length > 0) {
+      loadHistogramFile();
+    } else if (selectedPath) {
+      loadHistogramFromPath(selectedPath);
+    }
+  });
+}
 
 // Docs & sidebar
 const docsBtn = document.getElementById('docs-btn');
