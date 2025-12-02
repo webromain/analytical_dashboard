@@ -1,58 +1,66 @@
-# Analytical Dashboard
+# Dashboard Analytics
 
-## Overview
-The Analytical Dashboard is a web application designed to provide statistical insights and visualizations from data. It leverages FastAPI for the backend and a JavaScript framework for the frontend, allowing users to interact with data through a user-friendly interface.
+Un tableau de bord analytique complet (FastAPI + Pandas + Chart.js) pour charger un CSV, calculer des statistiques descriptives et afficher des visualisations interactives.
 
-## Goals
-- To provide statistical summaries (mean, median, variance) of uploaded datasets.
-- To visualize data through interactive charts.
-- To offer a seamless user experience with a responsive design.
+## Objectifs
+- Backend FastAPI: endpoints `/summary` (moyenne, médiane, variance) et `/histogram`.
+- Analyse de données: Pandas, Matplotlib.
+- Frontend: Vanilla JS + Chart.js (histogramme, série temporelle).
+- Tests unitaires: pytest (backend), tests DOM/config (frontend).
+- Outils IA: GitHub Copilot & TabNine (prompts, conventions, commandes).
+- CI: exécution des tests et lint minimal.
 
-## Installation Instructions
+## Prérequis
+- Windows 10/11
+- Accès à Internet (installation via winget)
 
-### Backend
-1. Navigate to the `backend` directory:
-   ```
-   cd backend
-   ```
-2. Install the required Python packages:
-   ```
-   pip install -r requirements.txt
-   ```
-
-### Frontend
-1. Navigate to the `frontend` directory:
-   ```
-   cd frontend
-   ```
-2. Install the required JavaScript packages:
-   ```
-   npm install
-   ```
-
-## Usage
-
-### Running the Backend
-To start the FastAPI application, run the following command in the `backend` directory:
+## Démarrage rapide (Windows PowerShell)
+```powershell
+# À la racine du projet (répertoire "dashboard-analytics")
+./setup.ps1
+# Une fois l'installation terminée, pour lancer le backend:
+./run.ps1
+# Ouvrez frontend/index.html dans votre navigateur (ou lancez un serveur statique si vous préférez)
 ```
-uvicorn app.main:app --reload
+
+## Backend
+- Dossier: `backend/`
+- Lancer localement (si environnement déjà prêt):
+```powershell
+cd backend
+..\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
-The application will be available at `http://127.0.0.1:8000`.
+- Endpoints:
+  - `GET http://127.0.0.1:8000/summary?file_path=../data/sample.csv`
+  - `GET http://127.0.0.1:8000/histogram?file_path=../data/sample.csv&column=value&bins=10`
 
-### Running the Frontend
-To start the frontend application, run the following command in the `frontend` directory:
+## Frontend
+- Ouvrir `frontend/index.html` (Chart.js chargé par CDN).
+- Le frontend appelle l'API backend sur `http://127.0.0.1:8000` (CORS autorisé).
+
+## Statistiques (explications simples)
+- **Moyenne**: somme des valeurs / nombre d'observations.
+- **Médiane**: valeur centrale qui coupe l'échantillon en deux.
+- **Variance**: moyenne des carrés des écarts à la moyenne (dispersion).
+- **Histogramme**: répartition des valeurs numériques en classes (bins).
+- **Séries temporelles**: mesures indexées par le temps, visualisées en courbe.
+
+## Tests
+- Backend:
+```powershell
+cd backend
+..\.venv\Scripts\Activate.ps1
+pytest -q
 ```
-npm start
+- Frontend:
+```powershell
+cd frontend
+node tests/test_ui.js
 ```
-The frontend will be available at `http://localhost:3000`.
 
-## Statistical Concepts
-- **Mean**: The average of a set of numbers, calculated by dividing the sum of all values by the count of values.
-- **Median**: The middle value in a list of numbers, which separates the higher half from the lower half.
-- **Variance**: A measure of how much values in a dataset differ from the mean, indicating the spread of the data.
+## CI
+Voir `.github/workflows/ci.yml`.
 
-## Contributing
-Contributions are welcome! Please submit a pull request or open an issue for any enhancements or bug fixes.
-
-## License
-This project is licensed under the MIT License. See the LICENSE file for details.
+## Données d'exemple
+`data/sample.csv` contient des colonnes `date`, `value`, `category` pour quickstart.

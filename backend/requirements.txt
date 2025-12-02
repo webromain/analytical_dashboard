@@ -1,6 +1,7 @@
-FastAPI
-Uvicorn
-Pandas
-Matplotlib
-pytest
-httpx
+fastapi>=0.110
+uvicorn[standard]>=0.24
+pandas>=2.1
+matplotlib>=3.8
+pytest>=7.4
+httpx>=0.25
+flake8>=6.1

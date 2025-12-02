@@ -1,20 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.endpoints import data
+from .routers import analytics
 
-app = FastAPI()
+app = FastAPI(title="Analytical Dashboard API", version="1.0.0")
 
-# Middleware to allow CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this as needed for production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include the API router
-app.include_router(data.router)
+app.include_router(analytics.router)
 
 @app.get("/")
 def read_root():

@@ -1,0 +1,12 @@
+# TabNine Commands
+# Syntax: command_name: description
+
+generate_histogram: Génère du code pour produire des données d'histogramme à partir d'une série Pandas et les préparer pour Chart.js.
+
+generate_time_series: Génère du code pour agréger des séries temporelles (par jour/semaine/mois) et formater les données pour Chart.js.
+
+explain_stat_mean: Explique la moyenne d'une manière didactique pour un public non spécialiste, avec un petit exemple.
+
+explain_stat_variance: Explique la variance et l'écart-type, et quand les utiliser.
+
+explain_histogram: Explique le principe d'un histogramme et comment choisir le nombre de classes (bins).
