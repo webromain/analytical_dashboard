@@ -38,48 +38,6 @@
 | **Bonnes pratiques** | ✅ Séparation services/routes, fonctions pures |
 | **Gestion d'erreurs** | ✅ Try/catch, validation Pydantic |
 
----
-
-### Analyse par phase du projet
-
-#### 1. **Initialisation (Structure & Config)**
-- **Prompt utilisé** : Génération complète de l'arborescence
-- **Impact** : L'IA a généré 15+ fichiers structurés en une seule requête
-- **Sans IA** : Création manuelle fichier par fichier, recherche de bonnes pratiques
-- **Gain** : Démarrage immédiat avec une architecture professionnelle
-
-#### 2. **Backend (FastAPI + Pandas)**
-- **Prompts** : Endpoints REST, services de traitement, modèles Pydantic
-- **Impact** : 
-  - Code typé et documenté dès la première génération
-  - Gestion CORS, validation automatique
-  - Fonctions statistiques (mean, median, variance) correctement implémentées
-- **Corrections manuelles** : Mise à jour `infer_datetime_format` déprécié → `format="mixed"`
-
-#### 3. **Frontend (Vanilla JS + Chart.js)**
-- **Prompts** : UI glassmorphism, graphiques interactifs, responsive design
-- **Impact** :
-  - Interface moderne générée avec CSS avancé
-  - Intégration Chart.js fonctionnelle
-  - Gestion des événements et appels API
-- **Corrections manuelles** : Ajustements CSS mineurs, debug sélecteurs de colonnes
-
-#### 4. **Tests & CI**
-- **Prompts** : Tests AAA, pipeline GitHub Actions
-- **Impact** :
-  - 4 tests backend couvrant les endpoints principaux
-  - Tests frontend pour la configuration des graphiques
-  - CI fonctionnel (lint + tests) dès la première itération
-
-#### 5. **Scripts de déploiement**
-- **Prompts** : Conversion PowerShell → Bash pour Linux
-- **Impact** : Scripts `setup.sh` et `run.sh` générés avec :
-  - Détection automatique du gestionnaire de paquets
-  - Gestion des terminaux multiples
-  - Nettoyage des ports utilisés
-
----
-
 ### Points forts de l'utilisation IA
 
 | Avantage | Description |
@@ -97,7 +55,6 @@
 | **APIs dépréciées** | `infer_datetime_format=True` obsolète | Vérification manuelle + mise à jour |
 | **Contexte limité** | Oubli de certaines dépendances entre fichiers | Prompts plus explicites |
 | **Spécificités OS** | Scripts PowerShell sur Linux | Demande de conversion explicite |
-| **Données réelles** | Le fichier gym n'a pas de colonne date | Compréhension du domaine métier nécessaire |
 
 ---
 
