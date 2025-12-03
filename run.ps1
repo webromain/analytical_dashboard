@@ -1,4 +1,7 @@
 # Run backend API (FastAPI / Uvicorn) and open frontend
+# Si votre pc vous empêche de démarrer les fichier run :
+# Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
 $ErrorActionPreference = "Stop"
 
 $venvActivate = Join-Path (Get-Location) ".venv\\Scripts\\Activate.ps1"
