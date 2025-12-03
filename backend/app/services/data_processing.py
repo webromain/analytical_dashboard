@@ -32,23 +32,53 @@ def generate_histogram_data(data: pd.DataFrame, column_name: str, bins: int = 10
 
 
 def infer_column_types(df: pd.DataFrame) -> List[Dict[str, str]]:
+    """Infer column types for frontend selectors.
+    
+    Detects numeric and datetime columns. For datetime detection,
+    tries multiple common date formats.
+    
+    Args:
+        df: Input DataFrame.
+        
+    Returns:
+        List of dicts with 'name' and 'type' keys.
+    """
     types: List[Dict[str, str]] = []
     for col in df.columns:
         dtype = df[col].dtype
         col_type = "string"
         if np.issubdtype(dtype, np.number):
             col_type = "number"
+        elif np.issubdtype(dtype, np.datetime64):
+            col_type = "datetime"
         else:
-            try:
-                parsed = pd.to_datetime(
-                    df[col].dropna().head(50),
-                    errors="raise",
-                    infer_datetime_format=True,
-                )
-                if len(parsed) > 0:
-                    col_type = "datetime"
-            except Exception:
-                col_type = "string"
+            # Try to parse as datetime with various formats
+            sample = df[col].dropna().head(50)
+            if len(sample) > 0:
+                try:
+                    # Try automatic parsing first
+                    parsed = pd.to_datetime(sample, errors="raise", format="mixed")
+                    if len(parsed) > 0:
+                        col_type = "datetime"
+                except Exception:
+                    # Try common date formats manually
+                    date_formats = [
+                        "%Y-%m-%d",
+                        "%d/%m/%Y",
+                        "%m/%d/%Y",
+                        "%Y/%m/%d",
+                        "%d-%m-%Y",
+                        "%Y-%m-%d %H:%M:%S",
+                        "%d/%m/%Y %H:%M:%S",
+                    ]
+                    for fmt in date_formats:
+                        try:
+                            parsed = pd.to_datetime(sample, format=fmt, errors="raise")
+                            if len(parsed) > 0:
+                                col_type = "datetime"
+                                break
+                        except Exception:
+                            continue
         types.append({"name": col, "type": col_type})
     return types
 
@@ -60,11 +90,33 @@ def generate_timeseries(
     freq: str = "D",
     agg: str = "sum",
 ) -> Dict[str, Any]:
+    """Generate time series data aggregated by frequency.
+    
+    Args:
+        df: Input DataFrame.
+        date_column: Name of the date column.
+        value_column: Name of the numeric value column.
+        freq: Pandas frequency string ('D', 'W', 'M', etc.).
+        agg: Aggregation method ('sum' or 'mean').
+        
+    Returns:
+        Dict with 'data' key containing list of {date, value} dicts.
+    """
     if date_column not in df.columns or value_column not in df.columns:
         raise ValueError("Columns not found in DataFrame")
-    dates = pd.to_datetime(df[date_column], errors="coerce", infer_datetime_format=True)
+    
+    # Try parsing dates with format="mixed" for flexibility
+    try:
+        dates = pd.to_datetime(df[date_column], errors="coerce", format="mixed")
+    except Exception:
+        dates = pd.to_datetime(df[date_column], errors="coerce")
+    
     values = pd.to_numeric(df[value_column], errors="coerce")
     ts = pd.DataFrame({"date": dates, "value": values}).dropna()
+    
+    if ts.empty:
+        return {"data": []}
+    
     ts = ts.set_index("date").sort_index()
     if agg == "sum":
         res = ts.resample(freq).sum()
