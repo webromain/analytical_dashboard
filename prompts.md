@@ -147,7 +147,7 @@ Respect strict des conventions, technologies et objectifs.
 L'application doit être fonctionnelle.
 Un fichier de configuration doit être créé à la racine du projet afin d'initialiser l'environnement et de permettre le lancement de l'application sur un poste vierge.
 
-## Pompt d'améliorations et corrections de bugs
+## Prompt d'améliorations et corrections de bugs
 
 Objectif : Créer une interface web moderne, responsive et élégante,
 style clear glass façon Apple, permettant de charger un fichier CSV et
