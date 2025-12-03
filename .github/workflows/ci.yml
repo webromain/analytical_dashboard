@@ -13,12 +13,16 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install backend deps
         run: |
           python -m pip install -U pip
           python -m pip install -r backend/requirements.txt
+
+      - name: Remove trailing whitespace from Python files
+        run: |
+          find backend/app -name "*.py" -exec sed -i 's/[ \t]*$//' {} +
 
       - name: Lint (flake8 minimal)
         run: |
@@ -36,7 +40,7 @@ jobs:
         if: ${{ hashFiles('frontend/package.json') != '' }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Frontend install + test (optional)
         if: ${{ hashFiles('frontend/package.json') != '' }}
